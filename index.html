@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bible — a native macOS Bible reader</title>
+<meta name="description" content="A native macOS Bible reader: warm paper, patient typography, the whole canon one keystroke away. No account, no network, no noise.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F1E7; --paper-deep: #EFE7D8; --sepia: #F1E2C6;
+    --ink: #221D17; --muted: #6E6559; --rule: #DED4C5; --accent: #8A5525;
+    --dark: #1C1A17; --dark-ink: #E9E2D5; --dark-muted: #9C9284; --dark-accent: #C9935A;
+    --yellow: #D9B23C;
+    --serif: "Literata", Georgia, serif;
+    --sans: "Inter", -apple-system, "Segoe UI", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--sans); background: var(--paper); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 28px; }
+
+  nav { position: sticky; top: 0; z-index: 40; background: rgba(246,241,231,.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule); }
+  nav .wrap { display: flex; align-items: center; height: 58px; gap: 24px; }
+  .mark { font-family: var(--serif); font-weight: 600; font-size: 19px; text-decoration: none; color: var(--ink); }
+  .mark b { color: var(--accent); font-weight: 600; }
+  nav .right { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  nav a.plain { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+  nav a.plain:hover { color: var(--ink); }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid var(--rule); color: var(--ink); }
+  .btn:hover { background: var(--paper-deep); }
+  .btn-ink { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn-ink:hover { background: #37312a; }
+
+  /* hero */
+  .hero { text-align: center; padding: 88px 0 72px; }
+  .hero h1 { font-family: var(--serif); font-weight: 600; letter-spacing: -.02em; font-size: clamp(40px, 6vw, 70px); line-height: 1.08; }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero p { max-width: 54ch; margin: 22px auto 0; color: var(--muted); font-size: 18px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 30px;
+    border: 1px solid var(--rule); border-radius: 999px; padding: 9px 20px;
+    font-size: 14px; color: var(--muted); background: #FBF8F1;
+  }
+  .chip kbd { font-family: var(--sans); font-weight: 600; font-size: 12.5px; background: var(--paper-deep); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 6px; padding: 1px 8px; color: var(--ink); }
+
+  /* app mockup */
+  .shot { max-width: 1000px; margin: 52px auto 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--rule); background: var(--paper); text-align: left; box-shadow: 0 44px 90px -36px rgba(34,29,23,.4), 0 14px 34px -22px rgba(34,29,23,.28); }
+  .bar { height: 38px; background: var(--paper-deep); border-bottom: 1px solid var(--rule); display: flex; align-items: center; padding: 0 15px; gap: 7px; }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; }
+  .bar .t { margin: 0 auto; font-size: 12px; color: var(--muted); transform: translateX(-22px); }
+  .app { display: grid; grid-template-columns: 236px 1fr; min-height: 430px; font-size: 12.5px; }
+  .side { border-right: 1px solid var(--rule); padding: 14px 14px 20px; background: var(--paper); }
+  .filter { border: 1px solid var(--rule); border-radius: 7px; padding: 5px 9px; color: var(--muted); background: #FBF8F1; margin-bottom: 12px; }
+  .side .h { font-family: var(--serif); font-size: 13px; font-weight: 600; margin: 4px 0 8px; }
+  .row { padding: 4px 6px; border-radius: 6px; color: var(--muted); }
+  .row.open { color: var(--ink); }
+  .row.here { color: var(--accent); }
+  .chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 6px 0 10px 8px; }
+  .c { aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; font-size: 10px; color: var(--ink); position: relative; }
+  .c.on { background: var(--accent); color: var(--paper); }
+  .c i { position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
+  .side .sep { border-top: 1px solid var(--rule); margin: 12px 0 8px; }
+  .mark-row { padding: 4px 6px; border-radius: 6px; color: var(--ink); position: relative; padding-left: 12px; }
+  .mark-row .bar { position: absolute; left: 2px; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: var(--yellow); border: 0; height: auto; padding: 0; }
+  .mark-row small { color: var(--muted); }
+  .read { padding: 22px 30px; }
+  .read .title { font-family: var(--serif); font-size: 19px; font-weight: 600; margin-bottom: 10px; }
+  .read p { font-family: var(--serif); font-size: 15.5px; line-height: 1.75; color: var(--ink); }
+  .read sup { font-size: 9px; color: var(--muted); }
+  .wash { background: color-mix(in srgb, var(--yellow) 32%, transparent); border-radius: 3px; padding: 1px 2px; }
+  .read .note::before { content: "●"; color: var(--accent); font-size: 7px; vertical-align: 4px; margin-right: 4px; }
+
+  /* statements */
+  .beats { padding: 40px 0 20px; }
+  .beat { min-height: 62vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 48px 0; }
+  .beat p { font-family: var(--serif); font-weight: 500; letter-spacing: -.015em; font-size: clamp(28px, 4.6vw, 52px); line-height: 1.22; max-width: 24ch; opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+  .beat.on p { opacity: 1; transform: none; }
+  .beat p em { font-style: italic; color: var(--accent); }
+  .beat p small { display: block; font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 16px; letter-spacing: 0; }
+  .beat p .kbd { font-family: var(--sans); font-size: .55em; font-weight: 600; background: var(--paper-deep); border: 1px solid var(--rule); border-bottom-width: 3px; border-radius: 8px; padding: 2px 12px; }
+  @media (prefers-reduced-motion: reduce) { .beat p { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+
+  /* install */
+  .install { background: var(--sepia); padding: 84px 0; }
+  .install h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 3.4vw, 38px); letter-spacing: -.015em; margin-bottom: 10px; }
+  .install .sub { color: var(--muted); margin-bottom: 30px; }
+  .install .card { max-width: 620px; background: #FBF8F1; border: 1px solid var(--rule); border-radius: 16px; padding: 30px 30px 26px; }
+  .install .dl { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .btn-big { font-size: 15.5px; padding: 13px 28px; }
+  .sha { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px; color: var(--muted); word-break: break-all; margin-top: 16px; }
+  .install .note { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+  .install .note a { color: var(--accent); }
+
+  /* topics */
+  .topics { padding: 84px 0; }
+  .topics h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 3.4vw, 38px); margin-bottom: 26px; }
+  details { border-bottom: 1px solid var(--rule); }
+  details summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; padding: 18px 2px; font-weight: 600; font-size: 16px; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "+"; color: var(--accent); font-family: var(--serif); font-size: 22px; }
+  details[open] summary::after { content: "–"; }
+  details .body { padding: 0 2px 22px; color: var(--muted); font-size: 15px; max-width: 72ch; }
+  details .body code { font-size: 13px; background: var(--paper-deep); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 7px; color: var(--ink); }
+  details .body a { color: var(--accent); }
+
+  /* qa */
+  .qa { padding: 84px 0 96px; }
+  .qa h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 3.4vw, 38px); margin-bottom: 22px; }
+  .qa .q { font-weight: 600; margin-bottom: 2px; }
+  .qa .a { color: var(--muted); margin-bottom: 18px; }
+
+  footer { border-top: 1px solid var(--rule); padding: 30px 0 44px; color: var(--muted); font-size: 13.5px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; }
+    .side { display: none; }
+    nav a.plain { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="mark" href="#">Bible<b>.</b></a>
+    <div class="right">
+      <a class="plain" href="https://github.com/madearga/bible-rs-rs">source</a>
+      <a class="btn btn-ink" href="https://github.com/madearga/bible-rs-rs/releases/latest/download/Bible-mac.zip">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The Bible, <em>set like a book.</em></h1>
+  <p>A native macOS reader I built because the words deserve better than a web view.
+     Warm paper, patient type, the whole canon one keystroke away.</p>
+  <span class="chip">Try it: <kbd>⌘K</kbd> then type <kbd>jn 3:16</kbd></span>
+
+  <div class="shot">
+    <div class="bar"><i style="background:#DF6F5B"></i><i style="background:#E8B84E"></i><i style="background:#86B864"></i><span class="t">Bible.app</span></div>
+    <div class="app">
+      <div class="side">
+        <div class="filter">Filter books</div>
+        <div class="row">+ Old Testament · 39</div>
+        <div class="row open">– New Testament · 27</div>
+        <div class="row">Matthew</div>
+        <div class="row">Mark</div>
+        <div class="row">Luke</div>
+        <div class="row here">– John</div>
+        <div class="chips">
+          <div class="c">1</div><div class="c">2</div><div class="c on">3<i></i></div><div class="c">4</div><div class="c">5</div><div class="c">6</div><div class="c">7</div>
+          <div class="c">8</div><div class="c">9</div><div class="c">10</div><div class="c">11</div><div class="c">12</div><div class="c">13</div><div class="c">14</div>
+          <div class="c">15</div><div class="c">16</div><div class="c">17</div><div class="c">18</div><div class="c">19</div><div class="c">20</div><div class="c">21</div>
+        </div>
+        <div class="row">Acts</div>
+        <div class="row">Romans</div>
+        <div class="sep"></div>
+        <div class="h">Study marks</div>
+        <div class="mark-row"><span class="bar"></span>John 3:16 · highlight · yellow</div>
+        <div class="mark-row"><small>John 3:17 · note</small></div>
+      </div>
+      <div class="read">
+        <div class="title">John 3</div>
+        <p><sup>16</sup> <span class="wash">For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.</span></p>
+        <p class="note"><sup>17</sup> For God sent not his Son into the world to condemn the world; but that the world through him might be saved.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="beats wrap">
+  <div class="beat"><p>Take the whole Bible.</p></div>
+  <div class="beat"><p>All 66 books. All 1,189 chapters. All 31,102 verses.</p></div>
+  <div class="beat"><p>In one continuous page, typeset the way a book is typeset.</p></div>
+  <div class="beat"><p>Highlight a verse. <em>The wash sits behind its words</em> — right there, mid-paragraph.</p></div>
+  <div class="beat"><p><span class="kbd">⌘K</span> then "jn 3:16". Typos welcome.</p></div>
+  <div class="beat"><p>Your marks follow the verse, not the translation.</p></div>
+  <div class="beat"><p>No account. No sync. No network request — <em>anywhere in the code.</em></p></div>
+  <div class="beat"><p>One SQLite file on your Mac is the whole story.</p></div>
+  <div class="beat"><p>Free. Open source. MIT.</p></div>
+  <div class="beat"><p>Get reading.</p></div>
+</div>
+
+<section class="install">
+  <div class="wrap">
+    <h2>One way in: your Mac.</h2>
+    <p class="sub">Apple silicon, macOS 14 or newer. The zip is 17 MB.</p>
+    <div class="card">
+      <div class="dl">
+        <a class="btn btn-ink btn-big" href="https://github.com/madearga/bible-rs-rs/releases/latest/download/Bible-mac.zip">Download Bible-mac.zip</a>
+        <a class="plain" style="color:var(--accent); font-size:14px; text-decoration:none;" href="https://github.com/madearga/bible-rs-rs/releases/latest">Read the release notes first ↗</a>
+      </div>
+      <p class="sha">SHA-256 · 769c353fa9c23bcae83ee7fd0d6e5746456d0e5288494ef5f9e3d4966971f886</p>
+      <p class="note">The build is unsigned, so the first launch asks for one confirmation:
+      right-click the app and choose Open. That is the whole ceremony.
+      Seven public-domain translations ride inside the binary, so it has scripture on a Mac that never installed anything.</p>
+    </div>
+  </div>
+</section>
+
+<section class="topics wrap">
+  <h2>Things you might be wondering.</h2>
+  <details>
+    <summary>Why does the reading feel different?</summary>
+    <div class="body">The text is set in Literata at a patient measure, with poetry indented by its
+    levels, the divine name in small capitals, and the words of Christ in red when you want them.
+    Verse numbers are superscripts in the margin, the way a printed reader's Bible does it.
+    You can read verse per line or in flowing paragraphs, and every setting is remembered.</div>
+  </details>
+  <details>
+    <summary>What do the study tools actually do?</summary>
+    <div class="body">Six highlight colours, and the wash is painted behind the verse's own words —
+    including the words it shares a line with in a paragraph. Notes, bookmarks, and a study list in
+    the sidebar that shows a snippet of every marked verse. Everything is keyed to a canonical grid
+    of 31,102 verses, so your marks follow the verse when you switch translations.</div>
+  </details>
+  <details>
+    <summary>Can I bring my own translation?</summary>
+    <div class="body">Yes. The app imports USFM, OSIS, Zefania, and SWORD modules — locked SWORD
+    modules included, by passphrase. Seven public-domain translations are already compiled in:
+    KJV, WEB, BSB, ASV, YLT, Darby, and Webster.</div>
+  </details>
+  <details>
+    <summary>Is there really no network code?</summary>
+    <div class="body">There is no network code. The app makes no request at any point — everything
+    it needs is compiled in or sits in your data folder. Your study data is one SQLite file next to
+    your translations, and it exports to Markdown or JSON whenever you want it out.</div>
+  </details>
+  <details>
+    <summary>Is it fast?</summary>
+    <div class="body">Whole-Bible search runs in about half a millisecond, a full chapter decodes in
+    five, and scrolling costs the app about twelve microseconds per frame. Those are measured
+    budgets from the project's own benchmarks, not marketing numbers, and every release is checked
+    against them.</div>
+  </details>
+  <details>
+    <summary>What is the clean-room story?</summary>
+    <div class="body">The design was allowed to study how another reader solves its problems; the
+    source was written from scratch for this repository and says so in every file's header.
+    <a href="https://github.com/madearga/bible-rs-rs/blob/main/THIRD_PARTY.md">THIRD_PARTY.md</a>
+    is precise about what that means, because overclaiming is how these stories go wrong.</div>
+  </details>
+</section>
+
+<section class="qa wrap">
+  <h2>Questions? Answers.</h2>
+  <p class="q">Does it phone home?</p>
+  <p class="a">It doesn't own a phone.</p>
+  <p class="q">Why is the app icon a single letter?</p>
+  <p class="a">Because the letter is set in the same face as the scripture, and the accent rule under it is the same colour as the margin marks. Restraint is the design.</p>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 madearga · MIT</span>
+    <span><a href="https://github.com/madearga/bible-rs-rs">source</a> · set in Literata &amp; Inter · built with Rust and egui</span>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("on");
+        io.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 0.35 });
+  document.querySelectorAll(".beat").forEach((beat) => io.observe(beat));
+</script>
+</body>
+</html>
